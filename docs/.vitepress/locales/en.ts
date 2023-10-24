@@ -28,7 +28,7 @@ function nav() {
   return [
     { text: 'Home', link: '/' },
     { text: 'Guide', link: '/guide/introduction/what-is-subconv'},
-    { text: 'GitHub', link: 'https://github.com/Geniucker/subconv'}
+    { text: 'GitHub', link: 'https://github.com/SubConv/SubConv'}
   ]
 }
 
