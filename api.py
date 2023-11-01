@@ -91,8 +91,12 @@ async def sub():
     if length(url) == 1:
         originalHeaders = requests.head(url[0], headers={'User-Agent':'clash'}).headers
         if 'subscription-userinfo' in originalHeaders:  # containing info about ramaining flow
+            if isinstance(originalHeaders['subscription-userinfo'], bytes):
+                originalHeaders['subscription-userinfo'] = originalHeaders['subscription-userinfo'].decode('utf-8')
             headers['subscription-userinfo'] = originalHeaders['subscription-userinfo']
         if 'Content-Disposition' in originalHeaders:  # containing filename
+            if isinstance(originalHeaders['Content-Disposition'], bytes):
+                originalHeaders['Content-Disposition'] = originalHeaders['Content-Disposition'].decode('utf-8')
             headers['Content-Disposition'] = originalHeaders['Content-Disposition'].replace("attachment", "inline")
 
     content = []  # the proxies of original subscriptions
