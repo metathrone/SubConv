@@ -29,9 +29,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 @app.get("/")
 async def mainpage():
     return FileResponse("static/index.html")
-@app.get("/{path:path}")
-async def index(path):
-    return FileResponse("static/"+path)
 
 
 # subscription to proxy-provider
@@ -126,6 +123,11 @@ async def sub(request: Request):
     result = await pack.pack(url=url, urlstandalone=urlstandalone, urlstandby=urlstandby,urlstandbystandalone=urlstandbystandalone, content=content, interval=interval, domain=domain, short=short)
     return Response(content=result, headers=headers)
 
+
+# static files
+@app.get("/{path:path}")
+async def index(path):
+    return FileResponse("static/"+path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
