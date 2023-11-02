@@ -1,5 +1,13 @@
 # Changelog
 
+## [7.0.1] - 2023-11-02
+
+### Fixed
+- fix: Quart设置的response headers貌似会在Vercel上的类型有问题，所以换成Fastapi by @Geniucker
+
+### Changed
+- perf: Quart换成了Fastapi，提升性能 by @Geniucker
+
 ## [7.0.0] - 2023-10-24
 ### **Breaking Changes**
 配置文件有变动，原配置文件无法正常工作，"手动选择"、"自动选择"、"负载均衡"、"故障转移"、"ZJU"等规则组需要重新配置，同时新增了一个必填字段`region_dict`，请参考[docs](https://docs-sub-conv.geniucker.top/guide/configuration/proxy-groups.html)或仓库中的`config.py`  
