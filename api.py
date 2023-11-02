@@ -4,11 +4,15 @@ from modules import pack
 from modules import parse
 from modules.convert import converter
 import re
-from flask import Flask, request, render_template 
+from fastapi import FastAPI
+from fastapi.requests import Request
+from fastapi.responses import FileResponse, Response
+from fastapi.staticfiles import StaticFiles
+import uvicorn
 import requests
 from urllib.parse import urlencode, unquote
-from gevent import pywsgi
 import argparse
+
 
 def length(sth):
     if sth is None:
@@ -16,23 +20,33 @@ def length(sth):
     else:
         return len(sth)
 
-app = Flask(__name__, static_folder="static")
+
+app = FastAPI()
 
 
-@app.route("/")
-def mainpage():
-    return app.send_static_file("index.html")
-# route for mainpage
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def index(path):
-    return app.send_static_file(path)
+# mainpage
+app.mount("/static", StaticFiles(directory="static"), name="static")
+@app.get("/")
+async def mainpage():
+    return FileResponse("static/index.html")
+@app.get("/{path:path}")
+async def index(path):
+    return FileResponse("static/"+path)
 
 
+# subscription to proxy-provider
+@app.get("/provider")
+async def provider(request: Request):
+    headers = {'Content-Type': 'text/yaml;charset=utf-8'}
+    url = request.query_params.get("url")
+    result = await parse.parseSubs(requests.get(url, headers={'User-Agent':'clash'}).text)
+    return Response(content=result, headers=headers)
+
+    
 # subscription converter api
-@app.route("/sub")
-def sub():
-    args = request.args
+@app.get("/sub")
+async def sub(request: Request):
+    args = request.query_params
     # get interval
     if "interval" in args:
         interval = args["interval"]
@@ -79,9 +93,9 @@ def sub():
             urlstandbystandalone = None
         
     if urlstandalone:
-        urlstandalone = converter.ConvertsV2Ray(urlstandalone)
+        urlstandalone = await converter.ConvertsV2Ray(urlstandalone)
     if urlstandbystandalone:
-        urlstandbystandalone = converter.ConvertsV2Ray(urlstandbystandalone)
+        urlstandbystandalone = await converter.ConvertsV2Ray(urlstandbystandalone)
 
     # get original headers
     headers = {'Content-Type': 'text/yaml;charset=utf-8'}
@@ -98,29 +112,19 @@ def sub():
         for i in range(len(url)):
             # the test of response
             respText = requests.get(url[i], headers={'User-Agent':'clash'}).text
-            content.append(parse.parseSubs(respText))
-            url[i] = "{}provider?{}".format(request.url_root, urlencode({"url": url[i]}))
+            content.append(await parse.parseSubs(respText))
+            url[i] = "{}provider?{}".format(request.base_url, urlencode({"url": url[i]}))
     if len(content) == 0:
         content = None
     if urlstandby:
         for i in range(len(urlstandby)):
-            urlstandby[i] = "{}provider?{}".format(request.url_root, urlencode({"url": urlstandby[i]}))
+            urlstandby[i] = "{}provider?{}".format(request.base_url, urlencode({"url": urlstandby[i]}))
 
     # get the domain or ip of this api to add rule for this
-    domain = re.search(r"([^:]+)(:\d{1,5})?", request.host).group(1)
+    domain = re.search(r"([^:]+)(:\d{1,5})?", request.url.hostname).group(1)
     # generate the subscription
-    result = pack.pack(url=url, urlstandalone=urlstandalone, urlstandby=urlstandby,urlstandbystandalone=urlstandbystandalone, content=content, interval=interval, domain=domain, short=short)
-    return result, headers
-
-
-# provider converter
-@app.route("/provider")
-def provider():
-    headers = {'Content-Type': 'text/yaml;charset=utf-8'}
-    url = request.args.get("url")
-    return parse.parseSubs(
-        requests.get(url, headers={'User-Agent':'clash'}).text
-    ), headers
+    result = await pack.pack(url=url, urlstandalone=urlstandalone, urlstandby=urlstandby,urlstandbystandalone=urlstandbystandalone, content=content, interval=interval, domain=domain, short=short)
+    return Response(content=result, headers=headers)
 
 
 if __name__ == "__main__":
@@ -131,7 +135,7 @@ if __name__ == "__main__":
     print("host:", args.host)
     print("port:", args.port)
     # Debug
-    # app.run(host=args.host, port=args.port, debug=True)
+    # uvicorn.run("api:app", host=args.host, port=args.port, reload=True)
     # Production
-    server = pywsgi.WSGIServer((args.host, args.port), app)
-    server.serve_forever()
+    module_name = __name__.split(".")[0]
+    uvicorn.run(module_name+":app", host=args.host, port=args.port, workers=4)

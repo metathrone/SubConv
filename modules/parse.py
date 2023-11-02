@@ -12,7 +12,7 @@ import modules.convert.converter as converter
 # regions and the regular expression to match them
 
 # parse yaml
-def parseSubs(content):
+async def parseSubs(content):
     try:
         proxies =  yaml.safe_dump(
             {"proxies": yaml.load(content, Loader=yaml.FullLoader).get("proxies")},
@@ -21,14 +21,14 @@ def parseSubs(content):
         )
     except:
         proxies = yaml.safe_dump(
-            {"proxies": converter.ConvertsV2Ray(content)},
+            {"proxies": await converter.ConvertsV2Ray(content)},
             allow_unicode=True,  # display characters like Chinese
             sort_keys=False  # keep the original sequence
         )
     return proxies
 
 # create a dict containg resions and corresponding proxy group
-def mkList(content: list, urlstandalone: list):
+async def mkList(content: list, urlstandalone: list):
     result = []
     total = {}
     providerProxyNames = []

@@ -14,7 +14,7 @@ import urllib.parse as urlparse
 import distutils
 
 
-def ConvertsV2Ray(buf):
+async def ConvertsV2Ray(buf):
 
     try:
         data = base64.b64decode(buf).decode("utf-8")
