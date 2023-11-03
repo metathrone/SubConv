@@ -3,15 +3,19 @@
 from modules import pack
 from modules import parse
 from modules.convert import converter
-import re
-from fastapi import FastAPI
+
+from fastapi import FastAPI, HTTPException
 from fastapi.requests import Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 import uvicorn
+
 import httpx
+
 from urllib.parse import urlencode, unquote
 import argparse
+from pathlib import Path
+import re
 
 
 def length(sth):
@@ -37,7 +41,10 @@ async def provider(request: Request):
     headers = {'Content-Type': 'text/yaml;charset=utf-8'}
     url = request.query_params.get("url")
     async with httpx.AsyncClient() as client:
-        result = await parse.parseSubs((await client.get(url, headers={'User-Agent':'clash'})).text)
+        resp = await client.get(url, headers={'User-Agent':'clash'})
+        if resp.status_code < 200 or resp.status_code >= 300:
+            raise HTTPException(status_code=resp.status_code, detail=resp.text)
+        result = await parse.parseSubs(resp.text)
     return Response(content=result, headers=headers)
 
     
@@ -100,7 +107,10 @@ async def sub(request: Request):
         headers = {'Content-Type': 'text/yaml;charset=utf-8'}
         # if there's only one subscription, return userinfo
         if length(url) == 1:
-            originalHeaders = (await client.head(url[0], headers={'User-Agent':'clash'})).headers
+            resp = await client.head(url[0], headers={'User-Agent':'clash'})
+            if resp.status_code < 200 or resp.status_code >= 300:
+                raise HTTPException(status_code=resp.status_code, detail=resp.text)
+            originalHeaders = resp.headers
             if 'subscription-userinfo' in originalHeaders:  # containing info about ramaining flow
                 headers['subscription-userinfo'] = originalHeaders['subscription-userinfo']
             if 'Content-Disposition' in originalHeaders:  # containing filename
@@ -129,7 +139,10 @@ async def sub(request: Request):
 # static files
 @app.get("/{path:path}")
 async def index(path):
-    return FileResponse("static/"+path)
+    if Path("static/"+path).exists():
+        return FileResponse("static/"+path)
+    else:
+        raise HTTPException(status_code=404, detail="Not Found")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
