@@ -9,7 +9,7 @@ from fastapi.requests import Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 import uvicorn
-import requests
+import httpx
 from urllib.parse import urlencode, unquote
 import argparse
 
@@ -36,7 +36,8 @@ async def mainpage():
 async def provider(request: Request):
     headers = {'Content-Type': 'text/yaml;charset=utf-8'}
     url = request.query_params.get("url")
-    result = await parse.parseSubs(requests.get(url, headers={'User-Agent':'clash'}).text)
+    async with httpx.AsyncClient() as client:
+        result = await parse.parseSubs((await client.get(url, headers={'User-Agent':'clash'})).text)
     return Response(content=result, headers=headers)
 
     
@@ -94,23 +95,24 @@ async def sub(request: Request):
     if urlstandbystandalone:
         urlstandbystandalone = await converter.ConvertsV2Ray(urlstandbystandalone)
 
-    # get original headers
-    headers = {'Content-Type': 'text/yaml;charset=utf-8'}
-    # if there's only one subscription, return userinfo
-    if length(url) == 1:
-        originalHeaders = requests.head(url[0], headers={'User-Agent':'clash'}).headers
-        if 'subscription-userinfo' in originalHeaders:  # containing info about ramaining flow
-            headers['subscription-userinfo'] = originalHeaders['subscription-userinfo']
-        if 'Content-Disposition' in originalHeaders:  # containing filename
-            headers['Content-Disposition'] = originalHeaders['Content-Disposition'].replace("attachment", "inline")
+    async with httpx.AsyncClient() as client:
+        # get original headers
+        headers = {'Content-Type': 'text/yaml;charset=utf-8'}
+        # if there's only one subscription, return userinfo
+        if length(url) == 1:
+            originalHeaders = (await client.head(url[0], headers={'User-Agent':'clash'})).headers
+            if 'subscription-userinfo' in originalHeaders:  # containing info about ramaining flow
+                headers['subscription-userinfo'] = originalHeaders['subscription-userinfo']
+            if 'Content-Disposition' in originalHeaders:  # containing filename
+                headers['Content-Disposition'] = originalHeaders['Content-Disposition'].replace("attachment", "inline")
 
-    content = []  # the proxies of original subscriptions
-    if url is not None:
-        for i in range(len(url)):
-            # the test of response
-            respText = requests.get(url[i], headers={'User-Agent':'clash'}).text
-            content.append(await parse.parseSubs(respText))
-            url[i] = "{}provider?{}".format(request.base_url, urlencode({"url": url[i]}))
+        content = []  # the proxies of original subscriptions
+        if url is not None:
+            for i in range(len(url)):
+                # the test of response
+                respText = (await client.get(url[i], headers={'User-Agent':'clash'})).text
+                content.append(await parse.parseSubs(respText))
+                url[i] = "{}provider?{}".format(request.base_url, urlencode({"url": url[i]}))
     if len(content) == 0:
         content = None
     if urlstandby:
