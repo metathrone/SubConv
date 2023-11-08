@@ -2,9 +2,6 @@
 ![license](https://img.shields.io/github/license/SubConv/SubConv) ![last commit](https://img.shields.io/github/last-commit/SubConv/SubConv)  
 这个项目是面向所有Clash用户的订阅转换，如果你需要ZJU专版，请移步[SubConv 4 ZJU](https://github.com/SubConv/SubConv-4-ZJU)  
 这是一个Clash订阅转换接口(仅提供试用，不保证安全性及可用性)  
-demo: <https://sub-converter.geniucker.top>  
-如果是试用可以直接点进demo看用法  
-> ***有能力请自行部署，因为vercel仓库所有者可以通过日志看到一个小时内发生错误的那次请求的请求参数***，当然我不会闲着没事去看，但请自行评估风险
 
 ## 功能
 - 支持Clash配置和V2ray格式的base64链接（即原始订阅不一定是Clash）  
@@ -20,26 +17,19 @@ demo: <https://sub-converter.geniucker.top>
 [docs](https://docs-sub-conv.geniucker.top) (中英都有, 但是机翻)  
 
 ## 使用
-~~如需使用请自行部署（因为vercel每个人的用量是有限的，太多人用会挂）~~ 新开了个vercel号用于demo。你可以用上面的demo（不保证可用性，但基本上不会出啥问题），也可以自己部署，推荐部署在vercel，一是免费，二是规则缓存在仓库里，更新的时候Vercel会自动更新。部署方法见 [docs](https://docs-sub-conv.geniucker.top) (中英都有)  
+如需使用请自行部署  
 
 ## 说明
 **若为原版内核需要v1.15.0或更新，否则会出现地区分组分类失败的情况**  
 ~~本接口适用于一元机场的订阅转换（大概率不适用于别的机场）~~ 现理论上适配所有机场，由于使用了clash特性proxy-provider，Linux用户只需保存转换后的配置可实现自动更新节点(不需要自动更新的脚本，是clash核心本身支持的)<br>
-规则来源：<https://github.com/Mythologyli/ZJU-Rule><br>
-规则配置具体参见`config.py`<br>
 
 ## 食用方法
 打开部署的链接或者上面给的demo，填如对应信息，点击确认生成，即可生成新的订阅链接，点击复制即可复制到剪贴板。  
-
-## 安全性问题
-本接口需要先读取你的订阅的内容再生成地区分组，该过程无任何持久化或网络发送操作，所以是安全的。您可以检查本项目的相关代码  
-> 但是Vercel仓库所有者可以通过日志看到一个小时内发生错误的那次请求的请求参数，所以请自行部署或使用可信的人的部署。  
 
 ## 为本项目贡献
 欢迎 issue 和 PR。如果要提pr请从main分支开新分支然后提pr到dev分支，或者也可以先把main合并到dev然后在dev里改，最后提pr到dev  
 
 ## 致谢
-- [ZJU-Rule](https://github.com/Mythologyli/ZJU-Rule/)  
 - [subconverter](https://github.com/tindy2013/subconverter)  
 - [Clash.Meta](https://github.com/MetaCubeX/Clash.Meta)  
 - ~~[Proxy Provider Converter](https://github.com/qier222/proxy-provider-converter)~~  
